@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "threejs.console", "threejs.console\threejs.console.vcxproj", "{91B4A016-BFA1-46C8-B504-81DA1EA678CD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D} = {BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "threejs.dlx", "threejs.dlx\threejs.dlx.vcxproj", "{D16D14B8-B86F-4606-8116-12F0B2D73AAB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D} = {BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "threejs.core", "threejs.core\threejs.core.vcxproj", "{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Hybrid|x64 = Hybrid|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91B4A016-BFA1-46C8-B504-81DA1EA678CD}.Debug|x64.ActiveCfg = Debug|x64
+		{91B4A016-BFA1-46C8-B504-81DA1EA678CD}.Debug|x64.Build.0 = Debug|x64
+		{91B4A016-BFA1-46C8-B504-81DA1EA678CD}.Hybrid|x64.ActiveCfg = Release|x64
+		{91B4A016-BFA1-46C8-B504-81DA1EA678CD}.Hybrid|x64.Build.0 = Release|x64
+		{91B4A016-BFA1-46C8-B504-81DA1EA678CD}.Release|x64.ActiveCfg = Release|x64
+		{91B4A016-BFA1-46C8-B504-81DA1EA678CD}.Release|x64.Build.0 = Release|x64
+		{D16D14B8-B86F-4606-8116-12F0B2D73AAB}.Debug|x64.ActiveCfg = Debug|x64
+		{D16D14B8-B86F-4606-8116-12F0B2D73AAB}.Debug|x64.Build.0 = Debug|x64
+		{D16D14B8-B86F-4606-8116-12F0B2D73AAB}.Hybrid|x64.ActiveCfg = Hybrid|x64
+		{D16D14B8-B86F-4606-8116-12F0B2D73AAB}.Hybrid|x64.Build.0 = Hybrid|x64
+		{D16D14B8-B86F-4606-8116-12F0B2D73AAB}.Release|x64.ActiveCfg = Release|x64
+		{D16D14B8-B86F-4606-8116-12F0B2D73AAB}.Release|x64.Build.0 = Release|x64
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}.Debug|x64.ActiveCfg = Debug|x64
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}.Debug|x64.Build.0 = Debug|x64
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}.Hybrid|x64.ActiveCfg = Release|x64
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}.Hybrid|x64.Build.0 = Release|x64
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}.Release|x64.ActiveCfg = Release|x64
+		{BD4DB4BA-1B36-4A78-8EAB-AB4C67EFE58D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
