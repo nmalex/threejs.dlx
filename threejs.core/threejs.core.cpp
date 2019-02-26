@@ -56,24 +56,6 @@ CThreeBufferGeometry* ParseThreeBufferGeometry(std::string input_filename) {
 	json j;
 	i >> j;
 
-	auto metadata = j["metadata"];
-
-	auto metadata_version = metadata["version"].get<float>();
-	auto metadata_type = metadata["type"].get<std::string>();
-	auto metadata_generator = metadata["generator"].get<std::string>();
-
-	if (metadata_version < 4.5) {
-		return nullptr;
-	}
-
-	if (metadata_type != "BufferGeometry") {
-		return nullptr;
-	}
-
-	if (metadata_generator != "BufferGeometry.toJSON") {
-		return nullptr;
-	}
-
 	auto geom_uuid = j["uuid"].get<std::string>();
 	auto geom_type = j["type"].get<std::string>();
 	if (geom_type != "BufferGeometry") {
