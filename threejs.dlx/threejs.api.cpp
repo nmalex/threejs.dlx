@@ -59,7 +59,33 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 	Mesh& mesh = gb->GetMesh();
 
 	if (geom->hasIndexedFaces()) {
-		// todo: implement it
+		auto verts = geom->getVerts();
+		mesh.setNumVerts(verts.size() / 3);
+
+		int vert_idx = 0;
+		auto iv = verts.begin();
+		while (iv != verts.end()) {
+			float x = *iv++;
+			float y = *iv++;
+			float z = *iv++;
+
+			mesh.setVert(vert_idx++, x, y, z);
+		}
+
+		auto faces = geom->getFaces();
+		mesh.setNumFaces(faces.size() / 3);
+
+		int face_idx = 0;
+		auto ifc = faces.begin();
+		while (ifc != faces.end()) {
+			int v0 = *ifc++;
+			int v1 = *ifc++;
+			int v2 = *ifc++;
+
+			mesh.faces[face_idx] = Face();
+			mesh.faces[face_idx].setVerts(v0, v1, v2);
+			++face_idx;
+		}
 	}
 	else {
 		auto verts = geom->getVerts();
@@ -79,42 +105,42 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 				mesh.faces[face_idx++].setVerts(vert_idx - 3, vert_idx - 2, vert_idx - 1);
 			}
 		}
+	}
 
-		int norm_idx = 0;
-		auto norms = geom->getNormals();
-		auto in = norms.begin();
-		while (in != norms.end()) {
-			float x = *in++;
-			float y = *in++;
-			float z = *in++;
+	int norm_idx = 0;
+	auto norms = geom->getNormals();
+	auto in = norms.begin();
+	while (in != norms.end()) {
+		float x = *in++;
+		float y = *in++;
+		float z = *in++;
 
-			mesh.setNormal(norm_idx++, Point3(x, y, z));
+		mesh.setNormal(norm_idx++, Point3(x, y, z));
+	}
+
+	if (geom->hasUvs()) {
+		mesh.setMapSupport(1, 1);
+		mesh.setNumMapVerts(1, geom->getVerts().size());
+		int uv_idx = 0;
+		auto uvs = geom->getUvs();
+		auto iu = uvs.begin();
+		while (iu != uvs.end()) {
+			float x = *iu++;
+			float y = *iu++;
+			mesh.setMapVert(1, uv_idx, UVVert(x, y, 0.0f));
 		}
+	}
 
-		if (geom->hasUvs()) {
-			mesh.setMapSupport(1, 1);
-			mesh.setNumMapVerts(1, geom->getVerts().size());
-			int uv_idx = 0;
-			auto uvs = geom->getUvs();
-			auto iu = uvs.begin();
-			while (iu != uvs.end()) {
-				float x = *iu++;
-				float y = *iu++;
-				mesh.setMapVert(1, uv_idx, UVVert(x, y, 0.0f));
-			}
-		}
-
-		if (geom->hasUvs2()) {
-			mesh.setMapSupport(2, 1);
-			mesh.setNumMapVerts(2, geom->getVerts().size());
-			int uv_idx = 0;
-			auto uvs = geom->getUvs2();
-			auto iu = uvs.begin();
-			while (iu != uvs.end()) {
-				float x = *iu++;
-				float y = *iu++;
-				mesh.setMapVert(2, uv_idx, UVVert(x, y, 0.0f));
-			}
+	if (geom->hasUvs2()) {
+		mesh.setMapSupport(2, 1);
+		mesh.setNumMapVerts(2, geom->getVerts().size());
+		int uv_idx = 0;
+		auto uvs = geom->getUvs2();
+		auto iu = uvs.begin();
+		while (iu != uvs.end()) {
+			float x = *iu++;
+			float y = *iu++;
+			mesh.setMapVert(2, uv_idx, UVVert(x, y, 0.0f));
 		}
 	}
 
