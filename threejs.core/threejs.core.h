@@ -36,12 +36,17 @@ private:
 	std::string m_positionType;
 	std::vector<float> m_positionVec;
 	bool m_positionNormalized;
+
+	int m_normalItemSize;
+	std::string m_normalType;
+	std::vector<float> m_normalVec;
+	bool m_normalNormalized;
+
+	std::vector<int> m_indexVec;
+	std::string m_indexType;
 	bool m_indexedFaces;
 
-	std::vector<int> m_faces;
-	std::vector<float> m_normals;
-	std::vector<float> m_uvs;
-	std::vector<float> m_uvs2;
+	std::vector<float> m_uvVec;
 
 public:
 	CThreeBufferGeometry() {
@@ -55,19 +60,15 @@ public:
 	}
 
 	virtual const std::vector<int>& getFaces() const {
-		return this->m_faces;
+		return this->m_indexVec;
 	}
 
 	virtual const std::vector<float>& getNormals() const {
-		return this->m_normals;
+		return this->m_normalVec;
 	}
 
 	virtual const std::vector<float>& getUvs() const {
-		return this->m_uvs;
-	}
-
-	virtual const std::vector<float>& getUvs2() const {
-		return this->m_uvs2;
+		return this->m_uvVec;
 	}
 
 	virtual const char* getType() const override {

@@ -283,88 +283,110 @@ Value* threejsExportBufferGeometry_cf(Value **arg_list, int count)
 			// swprintf(buffer, 8192, L"numVerts: %d, numFaces: %d\n", numVerts, numFaces);
 			// the_listener->edit_stream->wputs(buffer);
 
-			fprintf_s(pFile, "{\n");
+			fprintf_s(pFile, "{\n"); // json
+
 			fprintf_s(pFile, "     \"uuid\": \"%s\",\n", uuidBuf);
 			fprintf_s(pFile, "     \"type\": \"BufferGeometry\",\n");
-			fprintf_s(pFile, "     \"data\": {\n");
-			fprintf_s(pFile, "        \"attributes\": {\n");
-			fprintf_s(pFile, "            \"position\": {\n");
-			fprintf_s(pFile, "                \"itemSize\": 3,\n");
-			fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-			fprintf_s(pFile, "                \"array\": [");
 
-//todo: print verts here
-			for (int i = 0; i < numVerts; i++) {
-				if (i != 0) {
-					fprintf_s(pFile, ",");
+			fprintf_s(pFile, "     \"data\": {\n"); // data
+
+			fprintf_s(pFile, "        \"attributes\": {\n"); // attributes
+
+			// print verts here
+			{
+				fprintf_s(pFile, "            \"position\": {\n"); // position
+				fprintf_s(pFile, "                \"itemSize\": 3,\n");
+				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
+				fprintf_s(pFile, "                \"array\": [");
+
+				for (int i = 0; i < numVerts; i++) {
+					if (i != 0) {
+						fprintf_s(pFile, ",");
+					}
+					fprintf_s(pFile, "%f,%f,%f", mesh.verts[i].x, mesh.verts[i].y, mesh.verts[i].z);
 				}
-				fprintf_s(pFile, "%f,%f,%f", mesh.verts[i].x, mesh.verts[i].y, mesh.verts[i].z);
+
+				fprintf_s(pFile, "                ],\n");
+				fprintf_s(pFile, "                \"normalized\": false\n");
+				fprintf_s(pFile, "            },\n"); // end of position
 			}
 
-			fprintf_s(pFile, "                ],\n");
-			fprintf_s(pFile, "                \"normalized\": false\n");
-			fprintf_s(pFile, "            },\n");
-			fprintf_s(pFile, "            \"normal\": {\n");
-			fprintf_s(pFile, "                \"itemSize\": 3,\n");
-			fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-			fprintf_s(pFile, "                \"array\": [");
-//todo: print normals here
+			// print normals here
+			{
+				fprintf_s(pFile, "            \"normal\": {\n"); // normal
+				fprintf_s(pFile, "                \"itemSize\": 3,\n");
+				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
+				fprintf_s(pFile, "                \"array\": [");
 
-			PrintVertexNormals(pFile, &mesh);
+				PrintVertexNormals(pFile, &mesh);
 
-			fprintf_s(pFile, "                ],\n");
-			fprintf_s(pFile, "                \"normalized\": false\n");
-			fprintf_s(pFile, "            },\n");
-/*
-			fprintf_s(pFile, "            \"uv\": {\n");
-			fprintf_s(pFile, "                \"itemSize\": 2,\n");
-			fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-			fprintf_s(pFile, "                \"array\": [");
-//todo: print uv coords here
+				fprintf_s(pFile, "                ],\n");
+				fprintf_s(pFile, "                \"normalized\": false\n");
+				fprintf_s(pFile, "            },\n"); // end of normal
+			}
 
-			fprintf_s(pFile, "                ],\n");
-			fprintf_s(pFile, "                \"normalized\": false\n");
-			fprintf_s(pFile, "            }\n"); */
+			// print uv coords here
+			{
+				fprintf_s(pFile, "            \"uv\": {\n"); // uv
+				fprintf_s(pFile, "                \"itemSize\": 2,\n");
+				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
+				fprintf_s(pFile, "                \"array\": [");
 
-			fprintf_s(pFile, "            \"uv2\": {\n");
-			fprintf_s(pFile, "                \"itemSize\": 2,\n");
-			fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-			fprintf_s(pFile, "                \"array\": [");
-//todo: print uv2 coords here
-			UVVert* tVertPtr2 = mesh.mapVerts(2);
-			for (int i = 0; i < numVerts; i++) {
-				if (i != 0) {
-					fprintf_s(pFile, ",");
+				UVVert* tVertPtr1 = mesh.mapVerts(1);
+				for (int i = 0; i < numVerts; i++) {
+					if (i != 0) {
+						fprintf_s(pFile, ",");
+					}
+					fprintf_s(pFile, "%f,%f", tVertPtr1[i].x, tVertPtr1[i].y);
 				}
-				fprintf_s(pFile, "%f,%f", tVertPtr2[i].x, tVertPtr2[i].y);
+
+				fprintf_s(pFile, "                ],\n");
+				fprintf_s(pFile, "                \"normalized\": false\n");
+				fprintf_s(pFile, "            }\n"); // end of uv
 			}
 
-			fprintf_s(pFile, "                ],\n");
-			fprintf_s(pFile, "                \"normalized\": false\n");
-			fprintf_s(pFile, "            }\n");
-			fprintf_s(pFile, "        }\n");
-			fprintf_s(pFile, "    }\n");
-			fprintf_s(pFile, "}");
+			// print uv2 coords here
+			{
+				fprintf_s(pFile, "            \"uv2\": {\n"); // uv2
+				fprintf_s(pFile, "                \"itemSize\": 2,\n");
+				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
+				fprintf_s(pFile, "                \"array\": [");
 
-			/* 
-			for (int i = 0; i < numFaces; i++) {
-				swprintf(buffer, 8192, L"face[%d]: [ %d, %d, %d]\n", i, mesh.faces[i].getVert(0), mesh.faces[i].getVert(1), mesh.faces[i].getVert(2));
-				the_listener->edit_stream->wputs(buffer);
+				UVVert* tVertPtr2 = mesh.mapVerts(2);
+				for (int i = 0; i < numVerts; i++) {
+					if (i != 0) {
+						fprintf_s(pFile, ",");
+					}
+					fprintf_s(pFile, "%f,%f", tVertPtr2[i].x, tVertPtr2[i].y);
+				}
+
+				fprintf_s(pFile, "                ],\n");
+				fprintf_s(pFile, "                \"normalized\": false\n");
+				fprintf_s(pFile, "            }\n"); // end of uv2
 			}
 
-			UVVert* tVertPtr1 = mesh.mapVerts(1);
-			for (int i = 0; i < numVerts; i++) {
-				swprintf(buffer, 8192, L"tvert1[%d]: { x: %4.2f, y: %4.2f, z: %4.2f }\n", i, tVertPtr1[i].x, tVertPtr1[i].y, tVertPtr1[i].z);
-				the_listener->edit_stream->wputs(buffer);
+			// print index here
+			if (mesh.numFaces > 0) {
+				fprintf_s(pFile, "            ,\n");
+				fprintf_s(pFile, "            \"index\": {\n"); // index
+				fprintf_s(pFile, "                \"type\": \"Uint16Array\",\n");
+				fprintf_s(pFile, "                \"array\": [");
+
+				for (int i = 0; i < mesh.numFaces; i++) {
+					if (i != 0) {
+						fprintf_s(pFile, ",");
+					}
+					fprintf_s(pFile, "%d,%d,%d", mesh.faces[i].getVert(0), mesh.faces[i].getVert(1), mesh.faces[i].getVert(2));
+				}
+
+				fprintf_s(pFile, "            }\n"); // end of index
 			}
 
-			UVVert* tVertPtr2 = mesh.mapVerts(2);
-			for (int i = 0; i < numVerts; i++) {
-				swprintf(buffer, 8192, L"tvert2[%d]: { x: %4.2f, y: %4.2f, z: %4.2f }\n", i, tVertPtr2[i].x, tVertPtr2[i].y, tVertPtr2[i].z);
-				the_listener->edit_stream->wputs(buffer);
-			}
+			fprintf_s(pFile, "        }\n"); // end of attributes
 
-			the_listener->edit_stream->flush(); */
+			fprintf_s(pFile, "    }\n"); // end of data
+
+			fprintf_s(pFile, "}"); // end of json
 		}
 	}
 	catch (...) {
