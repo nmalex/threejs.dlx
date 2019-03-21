@@ -20,6 +20,8 @@ int main(int argc, char **argv)
 	auto input_filename = argv[1];
 	auto bufferGeomRef = ParseThreeBufferGeometry(input_filename);
 
+	SerializeThreeBufferGeometry("CD0F346A-CCF4-4169-AB22-A255BC6181E2", "C:\\Temp\\1.json", bufferGeomRef);
+
 	return 0;
 }
 

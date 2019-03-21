@@ -6,6 +6,7 @@
 #include <triobj.h>
 
 #include "threejs.core.h"
+#include "VNormal.h"
 
 void ThreejsApiInit()
 {
@@ -50,26 +51,18 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 	Interface* ip = GetCOREInterface();
 	INode* sceneRoot = ip->GetRootNode();
 
+	TriObject *gb = (TriObject *)ip->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(EDITTRIOBJ_CLASS_ID, 0));
+	INode* node = ip->CreateObjectNode(gb);
+	node->SetName(nodename);
+	sceneRoot->AttachChild(node);
+
+	Mesh& mesh = gb->GetMesh();
+
+	if (geom->hasIndexedFaces()) {
+		// todo: implement it
+	}
+	else {
 		auto verts = geom->getVerts();
-
-		TriObject *gb = (TriObject *)ip->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(EDITTRIOBJ_CLASS_ID, 0));
-		INode* node = ip->CreateObjectNode(gb);
-		node->SetName(nodename);
-		sceneRoot->AttachChild(node);
-
-		Mesh& mesh = gb->GetMesh();
-
-		int tvertCount = mesh.getNumTVerts();
-		UVVert* uvVertPtr = mesh.mapVerts(2);
-		int faceCount = mesh.getNumFaces();
-		TVFace* uvFacePtr = mesh.mapFaces(2);
-		DWORD* tverts = uvFacePtr->getAllTVerts();
-
-		// wchar_t buffer[8192];
-		// wsprintf(buffer, L"%d, %d\n", idx++, verts.size());
-		// the_listener->edit_stream->wputs(buffer);
-		// the_listener->edit_stream->flush();
-
 		mesh.setNumVerts(verts.size() / 3);
 		mesh.setNumFaces(verts.size() / 9);
 
@@ -85,28 +78,48 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 			if (vert_idx % 3 == 0) {
 				mesh.faces[face_idx++].setVerts(vert_idx - 3, vert_idx - 2, vert_idx - 1);
 			}
-
-			// wsprintf(buffer, L"%d, %d, %d\n", x, y, z);
-			// the_listener->edit_stream->wputs(buffer);
-			// the_listener->edit_stream->flush();
 		}
 
-		// mesh.setNormal()
+		int norm_idx = 0;
+		auto norms = geom->getNormals();
+		auto in = norms.begin();
+		while (in != norms.end()) {
+			float x = *in++;
+			float y = *in++;
+			float z = *in++;
 
-		//mesh.faces[0].setVerts(0, 1, 2);
-		//mesh.faces[0].setEdgeVisFlags(1, 1, 0);
-		//mesh.faces[0].setSmGroup(2);
-		//mesh.faces[1].setVerts(3, 1, 0);
-		//mesh.faces[1].setEdgeVisFlags(1, 1, 0);
-		//mesh.faces[1].setSmGroup(2);
-		//mesh.faces[2].setVerts(0, 2, 3);
-		//mesh.faces[2].setEdgeVisFlags(1, 1, 0);
-		//mesh.faces[2].setSmGroup(4);
+			mesh.setNormal(norm_idx++, Point3(x, y, z));
+		}
 
-		mesh.buildNormals();
+		if (geom->hasUvs()) {
+			mesh.setMapSupport(1, 1);
+			mesh.setNumMapVerts(1, geom->getVerts().size());
+			int uv_idx = 0;
+			auto uvs = geom->getUvs();
+			auto iu = uvs.begin();
+			while (iu != uvs.end()) {
+				float x = *iu++;
+				float y = *iu++;
+				mesh.setMapVert(1, uv_idx, UVVert(x, y, 0.0f));
+			}
+		}
 
-		mesh.InvalidateTopologyCache();
-		mesh.InvalidateGeomCache();
+		if (geom->hasUvs2()) {
+			mesh.setMapSupport(2, 1);
+			mesh.setNumMapVerts(2, geom->getVerts().size());
+			int uv_idx = 0;
+			auto uvs = geom->getUvs2();
+			auto iu = uvs.begin();
+			while (iu != uvs.end()) {
+				float x = *iu++;
+				float y = *iu++;
+				mesh.setMapVert(2, uv_idx, UVVert(x, y, 0.0f));
+			}
+		}
+	}
+
+	mesh.InvalidateTopologyCache();
+	mesh.InvalidateGeomCache();
 
 	wchar_t msgBuf[8192];
 	swprintf_s(msgBuf, 8192, L"Successfully imported BufferGeometry from %s\n", filename);
@@ -114,109 +127,6 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 	the_listener->edit_stream->flush();
 
 	return &true_value;
-}
-
-// Linked list of vertex normals
-class VNormal
-{
-public:
-	Point3 norm;
-	DWORD smooth;
-	VNormal *next;
-	BOOL init;
-
-	VNormal() { smooth = 0; next = NULL; init = FALSE; norm = Point3(0, 0, 0); }
-	VNormal(Point3 &n, DWORD s) { next = NULL; init = TRUE; norm = n; smooth = s; }
-	~VNormal() { delete next; }
-	void AddNormal(Point3 &n, DWORD s);
-	Point3 &GetNormal(DWORD s);
-	void Normalize();
-};
-
-// Add a normal to the list if the smoothing group bits overlap,
-// otherwise create a new vertex normal in the list
-void VNormal::AddNormal(Point3 &n, DWORD s) {
-	if (!(s&smooth) && init) {
-		if (next) next->AddNormal(n, s);
-		else {
-			next = new VNormal(n, s);
-		}
-	}
-	else {
-		norm += n;
-		smooth |= s;
-		init = TRUE;
-	}
-}
-
-// Retrieves a normal if the smoothing groups overlap or there is
-// only one in the list
-Point3 &VNormal::GetNormal(DWORD s)
-{
-	if (smooth& s || !next) return norm;
-	else return next->GetNormal(s);
-}
-
-// Normalize each normal in the list
-void VNormal::Normalize() {
-	VNormal *ptr = next, *prev = this;
-	while (ptr)
-	{
-		if (ptr->smooth&smooth) {
-			norm += ptr->norm;
-			prev->next = ptr->next;
-			delete ptr;
-			ptr = prev->next;
-		}
-		else {
-			prev = ptr;
-			ptr = ptr->next;
-		}
-	}
-	norm = ::Normalize(norm);
-	if (next) next->Normalize();
-}
-
-// Compute and print vertex normals
-void PrintVertexNormals(FILE * pFile, Mesh *mesh)
-{
-	Face *face;
-	Point3 *verts;
-	Point3 v0, v1, v2;
-	Tab<VNormal> vnorms;
-	Tab<Point3> fnorms;
-	face = mesh->faces;
-	verts = mesh->verts;
-	vnorms.SetCount(mesh->getNumVerts());
-	fnorms.SetCount(mesh->getNumFaces());
-
-	// Compute face and vertex surface normals
-	for (int i = 0; i < mesh->getNumVerts(); i++) {
-		vnorms[i] = VNormal();
-	}
-
-	for (int i = 0; i < mesh->getNumFaces(); i++, face++) {
-		// Calculate the surface normal
-		v0 = verts[face->v[0]];
-		v1 = verts[face->v[1]];
-		v2 = verts[face->v[2]];
-		fnorms[i] = (v1 - v0) ^ (v2 - v1);
-		for (int j = 0; j<3; j++) {
-			vnorms[face->v[j]].AddNormal(fnorms[i], face->smGroup);
-		}
-		fnorms[i] = Normalize(fnorms[i]);
-	}
-	for (int i = 0; i < mesh->getNumVerts(); i++) {
-		vnorms[i].Normalize();
-	}
-
-	for (int i = 0; i < vnorms.Count(); i++) {
-		auto vn = vnorms.Addr(i);
-		if (i != 0) {
-			fprintf_s(pFile, ",");
-		}
-		fprintf_s(pFile, "%f,%f,%f", vn->norm.x, vn->norm.y, vn->norm.z);
-	}
 }
 
 Value* threejsExportBufferGeometry_cf(Value **arg_list, int count)
@@ -256,15 +166,6 @@ Value* threejsExportBufferGeometry_cf(Value **arg_list, int count)
 	char uuidBuf[1024];
 	wcstombs(uuidBuf, uuid, 1024);
 
-	FILE * pFile = fopen(filenameBuf, "w");
-	if (!pFile) {
-		wchar_t buffer[8192];
-		swprintf(buffer, 8192, L"FAIL | Can't open file: %s\n", filename);
-		the_listener->edit_stream->wputs(buffer);
-		the_listener->edit_stream->flush();
-		return &false_value;
-	}
-
 	try {
 		Interface* ip = GetCOREInterface();
 		INode* node = ip->GetINodeByName(nodename);
@@ -276,117 +177,62 @@ Value* threejsExportBufferGeometry_cf(Value **arg_list, int count)
 			TriObject *tri = (TriObject *)obj->ConvertToType(ip->GetTime(), Class_ID(TRIOBJ_CLASS_ID, 0));
 			auto mesh = tri->GetMesh();
 
-			int numVerts = mesh.numVerts;
-			int numFaces = mesh.numFaces;
+			CThreeBufferGeometry geometry;
 
-			// wchar_t buffer[8192];
-			// swprintf(buffer, 8192, L"numVerts: %d, numFaces: %d\n", numVerts, numFaces);
-			// the_listener->edit_stream->wputs(buffer);
-
-			fprintf_s(pFile, "{\n"); // json
-
-			fprintf_s(pFile, "     \"uuid\": \"%s\",\n", uuidBuf);
-			fprintf_s(pFile, "     \"type\": \"BufferGeometry\",\n");
-
-			fprintf_s(pFile, "     \"data\": {\n"); // data
-
-			fprintf_s(pFile, "        \"attributes\": {\n"); // attributes
-
-			// print verts here
-			{
-				fprintf_s(pFile, "            \"position\": {\n"); // position
-				fprintf_s(pFile, "                \"itemSize\": 3,\n");
-				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-				fprintf_s(pFile, "                \"array\": [");
-
-				for (int i = 0; i < numVerts; i++) {
-					if (i != 0) {
-						fprintf_s(pFile, ",");
-					}
-					fprintf_s(pFile, "%f,%f,%f", mesh.verts[i].x, mesh.verts[i].y, mesh.verts[i].z);
-				}
-
-				fprintf_s(pFile, "                ],\n");
-				fprintf_s(pFile, "                \"normalized\": false\n");
-				fprintf_s(pFile, "            },\n"); // end of position
+			// collect verts
+			auto positionVec = geometry.getVerts();
+			for (int i = 0; i < mesh.numVerts; i++) {
+				positionVec.push_back(mesh.verts[i].x);
+				positionVec.push_back(mesh.verts[i].y);
+				positionVec.push_back(mesh.verts[i].z);
 			}
 
-			// print normals here
-			{
-				fprintf_s(pFile, "            \"normal\": {\n"); // normal
-				fprintf_s(pFile, "                \"itemSize\": 3,\n");
-				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-				fprintf_s(pFile, "                \"array\": [");
+			// collect normals
+			GetVertexNormals(&mesh, geometry.getNormals());
 
-				PrintVertexNormals(pFile, &mesh);
-
-				fprintf_s(pFile, "                ],\n");
-				fprintf_s(pFile, "                \"normalized\": false\n");
-				fprintf_s(pFile, "            },\n"); // end of normal
-			}
-
-			// print uv coords here
-			{
-				fprintf_s(pFile, "            \"uv\": {\n"); // uv
-				fprintf_s(pFile, "                \"itemSize\": 2,\n");
-				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-				fprintf_s(pFile, "                \"array\": [");
-
-				UVVert* tVertPtr1 = mesh.mapVerts(1);
-				for (int i = 0; i < numVerts; i++) {
-					if (i != 0) {
-						fprintf_s(pFile, ",");
-					}
-					fprintf_s(pFile, "%f,%f", tVertPtr1[i].x, tVertPtr1[i].y);
-				}
-
-				fprintf_s(pFile, "                ],\n");
-				fprintf_s(pFile, "                \"normalized\": false\n");
-				fprintf_s(pFile, "            }\n"); // end of uv
-			}
-
-			// print uv2 coords here
-			{
-				fprintf_s(pFile, "            \"uv2\": {\n"); // uv2
-				fprintf_s(pFile, "                \"itemSize\": 2,\n");
-				fprintf_s(pFile, "                \"type\": \"Float32Array\",\n");
-				fprintf_s(pFile, "                \"array\": [");
-
-				UVVert* tVertPtr2 = mesh.mapVerts(2);
-				for (int i = 0; i < numVerts; i++) {
-					if (i != 0) {
-						fprintf_s(pFile, ",");
-					}
-					fprintf_s(pFile, "%f,%f", tVertPtr2[i].x, tVertPtr2[i].y);
-				}
-
-				fprintf_s(pFile, "                ],\n");
-				fprintf_s(pFile, "                \"normalized\": false\n");
-				fprintf_s(pFile, "            }\n"); // end of uv2
-			}
-
-			// print index here
+			// collect faces
 			if (mesh.numFaces > 0) {
-				fprintf_s(pFile, "            ,\n");
-				fprintf_s(pFile, "            \"index\": {\n"); // index
-				fprintf_s(pFile, "                \"type\": \"Uint16Array\",\n");
-				fprintf_s(pFile, "                \"array\": [");
-
+				geometry.hasIndexedFaces(true);
+				auto indexVec = geometry.getFaces();
 				for (int i = 0; i < mesh.numFaces; i++) {
-					if (i != 0) {
-						fprintf_s(pFile, ",");
-					}
-					fprintf_s(pFile, "%d,%d,%d", mesh.faces[i].getVert(0), mesh.faces[i].getVert(1), mesh.faces[i].getVert(2));
+					indexVec.push_back(mesh.faces[i].getVert(0));
+					indexVec.push_back(mesh.faces[i].getVert(1));
+					indexVec.push_back(mesh.faces[i].getVert(2));
 				}
-
-				fprintf_s(pFile, "            }\n"); // end of index
+			}
+			else {
+				geometry.hasIndexedFaces(false);
 			}
 
-			fprintf_s(pFile, "        }\n"); // end of attributes
+			// collect UV coords channel#1
+			if (mesh.mapSupport(1)) {
+				auto uvVec = geometry.getUvs();
+				geometry.hasUvs(true);
+				UVVert* tVertPtr1 = mesh.mapVerts(1);
+				for (int i = 0; i < mesh.numVerts; i++) {
+					uvVec.push_back(tVertPtr1[i].x);
+					uvVec.push_back(tVertPtr1[i].y);
+				}
+			}
+			else {
+				geometry.hasUvs(false);
+			}
 
-			fprintf_s(pFile, "    }\n"); // end of data
+			// collect UV coords channel#2
+			if (mesh.mapSupport(2)) {
+				auto uv2Vec = geometry.getUvs2();
+				geometry.hasUvs2(true);
+				UVVert* tVertPtr2 = mesh.mapVerts(2);
+				for (int i = 0; i < mesh.numVerts; i++) {
+					uv2Vec.push_back(tVertPtr2[i].x);
+					uv2Vec.push_back(tVertPtr2[i].y);
+				}
+			}
+			else {
+				geometry.hasUvs2(false);
+			}
 
-			fprintf_s(pFile, "}"); // end of json
+			SerializeThreeBufferGeometry(uuidBuf, filenameBuf, &geometry);
 		}
 	}
 	catch (...) {
@@ -394,11 +240,8 @@ Value* threejsExportBufferGeometry_cf(Value **arg_list, int count)
 		swprintf(buffer, 8192, L"FAIL | Exception occurred\n");
 		the_listener->edit_stream->wputs(buffer);
 		the_listener->edit_stream->flush();
-		fclose(pFile);
 		return &false_value;
 	}
-
-	fclose(pFile);
 
 	return &true_value;
 }
