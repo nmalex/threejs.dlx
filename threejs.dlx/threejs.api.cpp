@@ -3,6 +3,8 @@
 #include <maxscript/foundation/arrays.h>
 #include <maxscript/util/listener.h>
 
+#include <mesh.h>
+#include <MeshNormalSpec.h>
 #include <triobj.h>
 
 #include "threejs.core.h"
@@ -17,6 +19,14 @@ void ThreejsApiInit()
 #include <maxscript\macros\define_instantiation_functions.h>
 def_visible_primitive(threejsImportBufferGeometry, "threejsImportBufferGeometry");
 def_visible_primitive(threejsExportBufferGeometry, "threejsExportBufferGeometry");
+
+// threejsImportBufferGeometry "F:\\Temp\\86992EEF-D27B-4FEC-9EBD-A5CC9BBFEBEE.json" "Mesh001"
+
+#define __print0(fmt) { wchar_t buffer[8192]; swprintf(buffer, 8192, fmt); the_listener->edit_stream->wputs(buffer); the_listener->edit_stream->flush(); }
+#define __print1(fmt,a) { wchar_t buffer[8192]; swprintf(buffer, 8192, fmt, a); the_listener->edit_stream->wputs(buffer); the_listener->edit_stream->flush(); }
+#define __print2(fmt,a,b) { wchar_t buffer[8192]; swprintf(buffer, 8192, fmt, a,b); the_listener->edit_stream->wputs(buffer); the_listener->edit_stream->flush(); }
+#define __print3(fmt,a,b,c) { wchar_t buffer[8192]; swprintf(buffer, 8192, fmt, a,b,c); the_listener->edit_stream->wputs(buffer); the_listener->edit_stream->flush(); }
+#define __print4(fmt,a,b,c,d) { wchar_t buffer[8192]; swprintf(buffer, 8192, fmt, a,b,c,d); the_listener->edit_stream->wputs(buffer); the_listener->edit_stream->flush(); }
 
 Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 {
@@ -50,63 +60,119 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 	Interface* ip = GetCOREInterface();
 	INode* sceneRoot = ip->GetRootNode();
 
-		auto verts = geom->getVerts();
+	auto verts = geom->getVerts();
+	auto norms = geom->getNormals();
+	auto uvs = geom->getUvs();
+	auto hasIndex = geom->hasIndex();
 
-		TriObject *gb = (TriObject *)ip->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(EDITTRIOBJ_CLASS_ID, 0));
-		INode* node = ip->CreateObjectNode(gb);
-		node->SetName(nodename);
-		sceneRoot->AttachChild(node);
+	TriObject *gb = (TriObject *)ip->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(EDITTRIOBJ_CLASS_ID, 0));
+	INode* node = ip->CreateObjectNode(gb);
+	node->SetName(nodename);
+	sceneRoot->AttachChild(node);
 
-		Mesh& mesh = gb->GetMesh();
+	Mesh& mesh = gb->GetMesh();
 
-		int tvertCount = mesh.getNumTVerts();
-		UVVert* uvVertPtr = mesh.mapVerts(2);
-		int faceCount = mesh.getNumFaces();
-		TVFace* uvFacePtr = mesh.mapFaces(2);
-		DWORD* tverts = uvFacePtr->getAllTVerts();
+	{
+		std::vector<int> triangleVertIndices = geom->getIndex();
+		int numVertices = (int)verts.size() / 3;
+		int numTriangles = hasIndex ? ((int)triangleVertIndices.size() / 3) : ((int)numVertices / 3);
 
-		// wchar_t buffer[8192];
-		// wsprintf(buffer, L"%d, %d\n", idx++, verts.size());
-		// the_listener->edit_stream->wputs(buffer);
-		// the_listener->edit_stream->flush();
+		// __print1(L"numVertices: %d\n", numVertices);
+		// __print1(L"numTriangles: %d\n", numTriangles);
 
-		mesh.setNumVerts(verts.size() / 3);
-		mesh.setNumFaces(verts.size() / 9);
+		mesh.setNumVerts(numVertices);
 
 		int vert_idx = 0;
-		int face_idx = 0;
 		auto iv = verts.begin();
 		while (iv != verts.end()) {
 			float x = *iv++;
 			float y = *iv++;
 			float z = *iv++;
 
+			// __print4(L"mesh.setVert: %d, [ %f, %f, %f ]\n", vert_idx, x,y,z);
 			mesh.setVert(vert_idx++, x, y, z);
-			if (vert_idx % 3 == 0) {
-				mesh.faces[face_idx++].setVerts(vert_idx - 3, vert_idx - 2, vert_idx - 1);
-			}
-
-			// wsprintf(buffer, L"%d, %d, %d\n", x, y, z);
-			// the_listener->edit_stream->wputs(buffer);
-			// the_listener->edit_stream->flush();
 		}
 
-		// mesh.setNormal()
+		// set vertex normals
+		mesh.SpecifyNormals();
+		MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
+		normalSpec->ClearNormals();
+		normalSpec->SetNumNormals(numVertices);
 
-		//mesh.faces[0].setVerts(0, 1, 2);
-		//mesh.faces[0].setEdgeVisFlags(1, 1, 0);
-		//mesh.faces[0].setSmGroup(2);
-		//mesh.faces[1].setVerts(3, 1, 0);
-		//mesh.faces[1].setEdgeVisFlags(1, 1, 0);
-		//mesh.faces[1].setSmGroup(2);
-		//mesh.faces[2].setVerts(0, 2, 3);
-		//mesh.faces[2].setEdgeVisFlags(1, 1, 0);
-		//mesh.faces[2].setSmGroup(4);
+		int norm_idx = 0;
+		auto _in = norms.begin();
+		while (_in != norms.end()) {
+			float x = *_in++;
+			float y = *_in++;
+			float z = *_in++;
 
-		mesh.buildNormals();
+			// __print4(L"mesh.setNorm: %d, [ %f, %f, %f ]\n", norm_idx, x, y, z);
 
-		mesh.InvalidateTopologyCache();
+			auto normals_i = new Point3(x, y, z);
+			normalSpec->Normal(norm_idx) = normals_i->Normalize();
+			normalSpec->SetNormalExplicit(norm_idx, true);
+
+			norm_idx += 1;
+		}
+
+		// set UVs
+		// TODO: multiple map channels?
+		// channel 0 is reserved for vertex color, channel 1 is the default texture mapping
+		mesh.setNumMaps(2);
+		mesh.setMapSupport(1, TRUE);  // enable map channel
+		MeshMap &map = mesh.Map(1);
+		map.setNumVerts(numVertices);
+
+		int uv_idx = 0;
+		auto iuv = uvs.begin();
+		while (iuv != uvs.end()) {
+			float x = *iuv++;
+			float y = *iuv++;
+
+			// __print3(L"mesh.setTV: %d, [ %f, %f ]\n", uv_idx, x, y);
+
+			UVVert &texVert = map.tv[uv_idx];
+			texVert.x = x;
+			texVert.y = y;
+			texVert.z = 0.0f;
+
+			uv_idx += 1;
+		}
+
+		// set triangles
+		mesh.setNumFaces(numTriangles);
+		normalSpec->SetNumFaces(numTriangles);
+		map.setNumFaces(numTriangles);
+		for (int i = 0, j = 0; i < numTriangles; i++, j += 3)
+		{
+			// three vertex indices of a triangle
+			int v0 = hasIndex ? triangleVertIndices[j + 0] : (j + 0);
+			int v1 = hasIndex ? triangleVertIndices[j + 1] : (j + 1);
+			int v2 = hasIndex ? triangleVertIndices[j + 2] : (j + 2);
+
+			// __print4(L"mesh.setFace: %d, [ %d, %d, %d ]\n", i, v0, v1, v2);
+
+			// vertex positions
+			Face &face = mesh.faces[i];
+			face.setMatID(1);
+			face.setEdgeVisFlags(1, 1, 1);
+			face.setVerts(v0, v1, v2);
+
+			// vertex normals
+			MeshNormalFace &normalFace = normalSpec->Face(i);
+			normalFace.SpecifyAll();
+			normalFace.SetNormalID(0, v0);
+			normalFace.SetNormalID(1, v1);
+			normalFace.SetNormalID(2, v2);
+
+			// vertex UVs
+			TVFace &texFace = map.tf[i];
+			texFace.setTVerts(v0, v1, v2);
+		}
+
 		mesh.InvalidateGeomCache();
+		mesh.InvalidateTopologyCache();
+	}
 
 	wchar_t msgBuf[8192];
 	swprintf_s(msgBuf, 8192, L"Successfully imported BufferGeometry from %s\n", filename);

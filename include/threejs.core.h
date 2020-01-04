@@ -12,17 +12,25 @@
 class CThreeParser;
 
 class CThreeGeometry {
+protected:
+	bool m_indexedFaces;
+
 public:
 	CThreeGeometry() {
+		m_indexedFaces = false;
 	}
 
 	virtual const std::vector<float>& getVerts() const = 0;
-	virtual const std::vector<int>& getFaces() const = 0;
+	virtual const std::vector<int>& getIndex() const = 0;
 	virtual const std::vector<float>& getNormals() const = 0;
 	virtual const std::vector<float>& getUvs() const = 0;
 
 	virtual const char* getType() const {
 		return "CThreeGeometry";
+	}
+
+	bool hasIndex() const {
+		return this->m_indexedFaces;
 	}
 
 	friend class CThreeParser;
@@ -32,16 +40,23 @@ typedef std::map<std::string, CThreeGeometryRef> CThreeGeometryMap;
 
 class CThreeBufferGeometry : public CThreeGeometry {
 private:
+	std::string m_indexType;
+	std::vector<int> m_indexVec;
+
 	int m_positionItemSize;
 	std::string m_positionType;
 	std::vector<float> m_positionVec;
 	bool m_positionNormalized;
-	bool m_indexedFaces;
 
-	std::vector<int> m_faces;
-	std::vector<float> m_normals;
-	std::vector<float> m_uvs;
-	std::vector<float> m_uvs2;
+	int m_normalItemSize;
+	std::string m_normalType;
+	std::vector<float> m_normalVec;
+	bool m_normalNormalized;
+
+	int m_uvItemSize;
+	std::string m_uvType;
+	std::vector<float> m_uvVec;
+	bool m_uvNormalized;
 
 public:
 	CThreeBufferGeometry() {
@@ -54,20 +69,16 @@ public:
 		return this->m_positionVec;
 	}
 
-	virtual const std::vector<int>& getFaces() const {
-		return this->m_faces;
+	virtual const std::vector<int>& getIndex() const {
+		return this->m_indexVec;
 	}
 
 	virtual const std::vector<float>& getNormals() const {
-		return this->m_normals;
+		return this->m_normalVec;
 	}
 
 	virtual const std::vector<float>& getUvs() const {
-		return this->m_uvs;
-	}
-
-	virtual const std::vector<float>& getUvs2() const {
-		return this->m_uvs2;
+		return this->m_uvVec;
 	}
 
 	virtual const char* getType() const override {
