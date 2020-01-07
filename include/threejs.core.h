@@ -16,6 +16,12 @@ protected:
 	bool m_indexedFaces;
 
 public:
+	struct Group {
+		int start;
+		int count;
+		int materialIndex;
+	};
+
 	CThreeGeometry() {
 		m_indexedFaces = false;
 	}
@@ -24,6 +30,7 @@ public:
 	virtual const std::vector<int>& getIndex() const = 0;
 	virtual const std::vector<float>& getNormals() const = 0;
 	virtual const std::vector<float>& getUvs() const = 0;
+	virtual const std::vector<const Group*>& getGroups() const = 0;
 
 	virtual const char* getType() const {
 		return "CThreeGeometry";
@@ -58,6 +65,8 @@ private:
 	std::vector<float> m_uvVec;
 	bool m_uvNormalized;
 
+	std::vector<const Group*> m_groups;
+
 public:
 	CThreeBufferGeometry() {
 	}
@@ -79,6 +88,10 @@ public:
 
 	virtual const std::vector<float>& getUvs() const {
 		return this->m_uvVec;
+	}
+
+	virtual const std::vector<const Group*>& getGroups() const {
+		return this->m_groups;
 	}
 
 	virtual const char* getType() const override {

@@ -40,6 +40,8 @@ void CThreeParser::parse(nlohmann::basic_json<> &json, CThreeBufferGeometry* tar
 
 	auto data_attributes = geom_data["attributes"];
 
+	auto data_groups = geom_data["groups"];
+
 	auto attr_position = data_attributes["position"];
 	if (!attr_position.is_null()) {
 		target->m_positionItemSize = attr_position["itemSize"].get<int>();
@@ -96,6 +98,17 @@ void CThreeParser::parse(nlohmann::basic_json<> &json, CThreeBufferGeometry* tar
 		auto n = 1;
 	} else {
 		target->m_indexedFaces = false;
+	}
+
+	if (!data_groups.is_null()) {
+		target->m_groups.clear();
+		for (auto it = data_groups.begin(); it != data_groups.end(); ++it) {
+			auto g = new CThreeGeometry::Group();
+			g->start = (*it)["start"].get<int>();
+			g->count = (*it)["count"].get<int>();
+			g->materialIndex = (*it)["materialIndex"].get<int>();
+			target->m_groups.push_back(g);
+		}
 	}
 }
 

@@ -64,6 +64,7 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 	auto norms = geom->getNormals();
 	auto uvs = geom->getUvs();
 	auto hasIndex = geom->hasIndex();
+	auto groups = geom->getGroups();
 
 	TriObject *gb = (TriObject *)ip->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(EDITTRIOBJ_CLASS_ID, 0));
 	INode* node = ip->CreateObjectNode(gb);
@@ -77,8 +78,8 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 		int numVertices = (int)verts.size() / 3;
 		int numTriangles = hasIndex ? ((int)triangleVertIndices.size() / 3) : ((int)numVertices / 3);
 
-		// __print1(L"numVertices: %d\n", numVertices);
-		// __print1(L"numTriangles: %d\n", numTriangles);
+		__print1(L"numVertices: %d\n", numVertices);
+		__print1(L"numTriangles: %d\n", numTriangles);
 
 		mesh.setNumVerts(numVertices);
 
@@ -168,6 +169,18 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 			// vertex UVs
 			TVFace &texFace = map.tf[i];
 			texFace.setTVerts(v0, v1, v2);
+		}
+
+		auto ig = groups.begin();
+		__print1(L"importing groups: %d\n", groups.size());
+		while (ig != groups.end()) {
+			auto group = *ig++;
+			__print3(L"faces: %d - %d, material ID: %d\n", group->start, group->start + group->count, group->materialIndex);
+
+			auto mtlIdx = group->materialIndex;
+			for (int i = 0, c = (int)(group->start / 3); i < group->count; i += 3, c += 1) {
+				mesh.setFaceMtlIndex(c, mtlIdx);
+			}
 		}
 
 		mesh.InvalidateGeomCache();
