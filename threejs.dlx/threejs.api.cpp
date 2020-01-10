@@ -172,10 +172,10 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 		}
 
 		auto ig = groups.begin();
-		__print1(L"importing groups: %d\n", groups.size());
+		//__print1(L"importing groups: %d\n", groups.size());
 		while (ig != groups.end()) {
 			auto group = *ig++;
-			__print3(L"faces: %d - %d, material ID: %d\n", group->start, group->start + group->count, group->materialIndex);
+			//__print3(L"faces: %d - %d, material ID: %d\n", group->start, group->start + group->count, group->materialIndex);
 
 			auto mtlIdx = group->materialIndex;
 			for (int i = 0, c = (int)(group->start / 3); i < group->count; i += 3, c += 1) {
