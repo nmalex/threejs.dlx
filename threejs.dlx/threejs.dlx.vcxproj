@@ -77,13 +77,11 @@
   <ItemGroup>
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="threejs.api.cpp" />
-    <ClCompile Include="VNormal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\threejs.core.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="veroverrides.h" />
-    <ClInclude Include="VNormal.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="threejs.def" />
