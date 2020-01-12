@@ -52,7 +52,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;bmm.lib;core.lib;geom.lib;gfx.lib;mesh.lib;maxutil.lib;maxscrpt.lib;gup.lib;paramblk2.lib;threejs.core.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MaxSdkLib);$(SolutionDir)lib\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MaxSdkLib)..\Release\;$(SolutionDir)lib\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>.\threejs.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -65,6 +65,9 @@
     <ClCompile>
       <PreprocessorDefinitions>_SECURE_SCL=0;_USRDLL;INTERVALARRAY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>xcopy F:\Projects\threejs.dlx\bin\Release\threejs.dlx "D:\Autodesk\3ds Max 2018\Plugins\" /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Hybrid|x64'">
     <ClCompile>
