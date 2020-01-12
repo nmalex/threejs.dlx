@@ -78,8 +78,8 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 		int numVertices = (int)verts.size() / 3;
 		int numTriangles = hasIndex ? ((int)triangleVertIndices.size() / 3) : ((int)numVertices / 3);
 
-		__print1(L"numVertices: %d\n", numVertices);
-		__print1(L"numTriangles: %d\n", numTriangles);
+		//__print1(L"numVertices: %d\n", numVertices);
+		//__print1(L"numTriangles: %d\n", numTriangles);
 
 		mesh.setNumVerts(numVertices);
 
@@ -187,10 +187,10 @@ Value* threejsImportBufferGeometry_cf(Value **arg_list, int count)
 		mesh.InvalidateTopologyCache();
 	}
 
-	wchar_t msgBuf[8192];
-	swprintf_s(msgBuf, 8192, L"Successfully imported BufferGeometry from %s\n", filename);
-	the_listener->edit_stream->wputs(msgBuf);
-	the_listener->edit_stream->flush();
+	//wchar_t msgBuf[8192];
+	//swprintf_s(msgBuf, 8192, L"Successfully imported BufferGeometry from %s\n", filename);
+	//the_listener->edit_stream->wputs(msgBuf);
+	//the_listener->edit_stream->flush();
 
 	return &true_value;
 }
